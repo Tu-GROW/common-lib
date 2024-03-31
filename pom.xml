@@ -51,4 +51,12 @@
 		</plugins>
 	</build>
 
+	<distributionManagement>
+		<repository>
+			<id>eyeriz</id>
+			<name>Iris Common Library</name>
+			<url>https://maven.pkg.github.com/eyeriz/common-lib</url>
+		</repository>
+	</distributionManagement>
+
 </project>

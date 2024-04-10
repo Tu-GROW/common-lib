@@ -9,9 +9,9 @@
 		<relativePath/>
 	</parent>
 	<groupId>com.iris</groupId>
-	<artifactId>common.lib</artifactId>
+	<artifactId>commonLib</artifactId>
 	<version>0.1.2</version>
-	<name>common.lib</name>
+	<name>commonLib</name>
 	<description>Iris Common Library</description>
 	<properties>
 		<java.version>21</java.version>

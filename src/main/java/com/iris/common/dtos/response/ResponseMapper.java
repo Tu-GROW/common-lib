@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.ToString;
 
 @Builder
-@ToString
 public record ResponseMapper<T>(Header header, T body){
 
 }

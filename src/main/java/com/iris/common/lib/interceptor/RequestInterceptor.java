@@ -23,9 +23,11 @@ public class RequestInterceptor implements HandlerInterceptor {
       @NonNull Object handler) {
 
     String requestId = request.getHeader(X_REQUEST_ID);
-    log.info("New incoming request {} ", requestId);
     if (requestId == null || requestId.isEmpty()) {
       requestId = UUID.randomUUID().toString();
+      log.info("New incoming requestId: {} ", requestId);
+    }else{
+      log.info("New call for requestId: {}", requestId);
     }
 
     MDC.put(MdcKeys.REQUEST_ID.getKey(), requestId);
@@ -36,7 +38,7 @@ public class RequestInterceptor implements HandlerInterceptor {
   @Override
   public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
       @NonNull Object handler, Exception ex) {
-    log.info("Request {} completed", MDC.get(MdcKeys.REQUEST_ID.getKey()));
+    log.info("RequestId {} completed", MDC.get(MdcKeys.REQUEST_ID.getKey()));
     MDC.remove(MdcKeys.REQUEST_ID.getKey());
     MDC.remove(MdcKeys.START_TIME.getKey());
 

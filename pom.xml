@@ -8,17 +8,15 @@
 		<version>3.2.2</version>
 		<relativePath/>
 	</parent>
-	<groupId>com.iris</groupId>
-	<artifactId>commonLib</artifactId>
-	<version>0.1.2</version>
-	<name>commonLib</name>
+	<groupId>com.iris.common</groupId>
+	<artifactId>lib</artifactId>
+	<version>1.0.0</version>
+	<name>common-library</name>
 	<description>Iris Common Library</description>
 	<properties>
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
-
-
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>

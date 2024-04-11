@@ -1,4 +1,4 @@
-package com.iris.common.dtos.response;
+package com.iris.common.lib.dtos.response;
 
 
 import java.io.Serializable;

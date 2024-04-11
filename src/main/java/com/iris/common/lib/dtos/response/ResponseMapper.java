@@ -1,7 +1,6 @@
-package com.iris.common.dtos.response;
+package com.iris.common.lib.dtos.response;
 
 import lombok.Builder;
-import lombok.ToString;
 
 @Builder
 public record ResponseMapper<T>(Header header, T body){

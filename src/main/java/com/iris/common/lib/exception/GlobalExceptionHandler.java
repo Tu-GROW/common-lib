@@ -19,7 +19,7 @@ import org.springframework.web.context.request.WebRequest;
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ResponseMapper<Object>> globalExceptionHandler(Exception ex, WebRequest request) {
+  public ResponseEntity<ResponseMapper<?>> globalExceptionHandler(Exception ex, WebRequest request) {
     log.error(
         String.format("Unhandled Service Exception for Request %s RequestId %s", request.getDescription(true),
             MDC.get(MdcKeys.REQUEST_ID.getKey())),

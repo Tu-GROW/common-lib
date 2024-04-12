@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.iris.common</groupId>
 	<artifactId>lib</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<name>library</name>
 	<description>Iris Common Library</description>
 	<properties>
@@ -25,7 +25,10 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>

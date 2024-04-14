@@ -1,0 +1,3 @@
+wiremock:
+  server:
+    port: 53312

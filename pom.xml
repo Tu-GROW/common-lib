@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.iris.common</groupId>
 	<artifactId>lib</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.0</version>
 	<name>library</name>
 	<description>Iris Common Library</description>
 	<properties>
@@ -42,12 +42,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.github.tomakehurst</groupId>
-			<artifactId>wiremock</artifactId>
-			<version>2.27.2</version>
 		</dependency>
 	</dependencies>
 

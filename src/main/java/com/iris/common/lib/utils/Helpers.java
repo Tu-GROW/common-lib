@@ -13,7 +13,8 @@ import org.springframework.util.ResourceUtils;
 
 
 public class Helpers {
-    public String maskMsisdn(String string){
+
+    public String maskMsisdn(String string) {
         try {
             Pattern pattern = Pattern.compile("\\b254\\w{4}");
             Matcher matcher = pattern.matcher(string);
@@ -22,16 +23,16 @@ public class Helpers {
                 string = string.replaceAll(orig, "254****");
                 matcher = pattern.matcher(string);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
         return string;
     }
 
-    public static String date(){
+    public static String date() {
         String pattern = "yyyyMMddHHmmss";
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-        return  simpleDateFormat.format(new java.util.Date());
+        return simpleDateFormat.format(new java.util.Date());
     }
 
     /**
@@ -58,10 +59,19 @@ public class Helpers {
     public static String readFromResourcesFolder(String filePath) {
         try {
             File file = ResourceUtils.getFile(filePath);
-            return  new String(Files.readAllBytes(file.toPath()));
+            return new String(Files.readAllBytes(file.toPath()));
         } catch (IOException exception) {
             throw new RuntimeException(
                 String.format("Could not read %s from resources folder [%s]", filePath, exception.getMessage()));
+        }
+    }
+
+    public static <T> T convertStringToObject(String jsonString, Class<T> classObject){
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(jsonString, classObject);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not convert ["+jsonString+"] to an object", e);
         }
     }
 }

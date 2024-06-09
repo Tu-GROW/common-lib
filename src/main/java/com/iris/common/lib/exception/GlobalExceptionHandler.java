@@ -58,7 +58,7 @@ public class GlobalExceptionHandler {
         .header(header)
         .body(null)
         .build();
-    return ResponseEntity.status(header.responseCode()).body(response);
+    return ResponseEntity.ok(response);
   }
 
   @ExceptionHandler(ResourceNotFoundException.class)

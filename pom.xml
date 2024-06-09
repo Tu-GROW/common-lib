@@ -8,11 +8,11 @@
 		<version>3.2.3</version>
 		<relativePath/>
 	</parent>
-	<groupId>com.iris.common</groupId>
+	<groupId>com.Tu-GROW.common</groupId>
 	<artifactId>lib</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<name>library</name>
-	<description>Iris Common Library</description>
+	<description>Tu-GROW Common Library</description>
 	<properties>
 		<java.version>21</java.version>
 		<maven.compiler.source>21</maven.compiler.source>
@@ -34,7 +34,6 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
-			<version>1.18.32</version>
 		</dependency>
 
 		<!-- test -->
@@ -62,7 +61,7 @@
 		<repository>
 			<id>github</id>
 			<name>Iris Common Library</name>
-			<url>https://maven.pkg.github.com/eyeriz/common-lib</url>
+			<url>https://maven.pkg.github.com/Tu-GROW/common-lib</url>
 		</repository>
 	</distributionManagement>
 

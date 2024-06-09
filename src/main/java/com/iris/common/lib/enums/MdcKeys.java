@@ -8,7 +8,6 @@ public enum MdcKeys {
   START_TIME("startTime");
 
   private final String key;
-
   MdcKeys(String key) {
     this.key = key;
   }

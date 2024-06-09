@@ -3,7 +3,9 @@ package com.iris.common.lib.interceptor;
 
 import com.iris.common.lib.dtos.response.Header;
 import com.iris.common.lib.dtos.response.ResponseMapper;
+import com.iris.common.lib.enums.MdcKeys;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,17 +33,20 @@ public class HttpResponseDecorator implements ResponseBodyAdvice<Object> {
 
     log.info("Response Payload: {} ", body);
 
-    if (body instanceof ResponseEntity<?>) {
+    if (body instanceof ResponseEntity<?> || body instanceof ResponseMapper<?>) {
       return  body;
     }
     return decorateToAtlasEnvelope(body);
   }
 
   private ResponseMapper<?> decorateToAtlasEnvelope(Object body) {
+
+    long executionTime = System.currentTimeMillis() - Long.parseLong(MDC.get(MdcKeys.START_TIME.getKey()));
     var header = Header.builder()
         .customerMessage("Success")
         .responseDesc("Success")
         .responseCode(HttpStatus.OK.value())
+        .executionTime(executionTime)
         .build();
 
     return  ResponseMapper.builder()

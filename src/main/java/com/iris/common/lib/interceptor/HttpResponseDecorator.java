@@ -21,37 +21,58 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 @Slf4j
 public class HttpResponseDecorator implements ResponseBodyAdvice<Object> {
 
-  @Override
-  public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-    return returnType.getContainingClass().isAnnotationPresent(RestController.class);
-  }
-
-  @Override
-  public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
-      Class<? extends HttpMessageConverter<?>> selectedConverterType,
-      ServerHttpRequest request, ServerHttpResponse response) {
-
-    log.info("Response Payload: {} ", body);
-
-    if (body instanceof ResponseEntity<?> || body instanceof ResponseMapper<?>) {
-      return  body;
+    @Override
+    public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
+        return returnType.getContainingClass().isAnnotationPresent(RestController.class);
     }
-    return decorateToAtlasEnvelope(body);
-  }
 
-  private ResponseMapper<?> decorateToAtlasEnvelope(Object body) {
+    @Override
+    public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
+                                  Class<? extends HttpMessageConverter<?>> selectedConverterType,
+                                  ServerHttpRequest request, ServerHttpResponse response) {
 
-    long executionTime = System.currentTimeMillis() - Long.parseLong(MDC.get(MdcKeys.START_TIME.getKey()));
-    var header = Header.builder()
-        .customerMessage("Success")
-        .responseDesc("Success")
-        .responseCode(HttpStatus.OK.value())
-        .executionTime(executionTime)
-        .build();
+        String path = request.getURI().getPath();
+        if (isSwaggerPath(path)) {
+            return body;
+        }
+        log.info("Response Payload: {} ", body);
 
-    return  ResponseMapper.builder()
-        .header(header)
-        .body(body)
-        .build();
-  }
+        if (body instanceof ResponseEntity<?> || body instanceof ResponseMapper<?>) {
+            return body;
+        }
+
+        if (body instanceof String) {
+            return body;
+        }
+
+        return responseDecorator(body);
+    }
+
+    private boolean isSwaggerPath(String path) {
+        return path != null && (
+                path.startsWith("/swagger-ui") ||
+                        path.startsWith("/v3/api-docs") ||
+                        path.startsWith("/v2/api-docs") ||
+                        path.startsWith("/api-docs") ||
+                        path.startsWith("/swagger-resources") ||
+                        path.startsWith("/webjars/") ||
+                        path.equals("/swagger-ui.html")
+        );
+    }
+
+    private ResponseMapper<?> responseDecorator(Object body) {
+
+        long executionTime = System.currentTimeMillis() - Long.parseLong(MDC.get(MdcKeys.START_TIME.getKey()));
+        var header = Header.builder()
+                .customerMessage("Success")
+                .responseDesc("Success")
+                .responseCode(HttpStatus.OK.value())
+                .executionTime(executionTime)
+                .build();
+
+        return ResponseMapper.builder()
+                .header(header)
+                .body(body)
+                .build();
+    }
 }

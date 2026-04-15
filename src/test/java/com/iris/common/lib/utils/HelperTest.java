@@ -7,7 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 class HelperTest {
 
@@ -56,6 +61,75 @@ class HelperTest {
     assertThrows(RuntimeException.class, () -> {
       convertStringToObject(jsonString, RandomObject.class);
     });
+  }
+
+  // ── convertObjectToJson(ObjectMapper, Object, String) ─────────────────────
+
+  @Test
+  void givenValidObject_whenConvertObjectToJsonWithMapper_returnJsonString() {
+    ObjectMapper mapper = new ObjectMapper();
+    RandomObject obj = new RandomObject("age", 10);
+
+    String result = convertObjectToJson(mapper, obj, "{}");
+
+    assertEquals("{\"key\":\"age\",\"value\":10}", result);
+  }
+
+  @Test
+  void givenUnserializableObject_whenConvertObjectToJsonWithMapper_returnFallback() {
+    // ObjectMapper fails on empty beans by default — Object() has no properties
+    ObjectMapper mapper = new ObjectMapper();
+
+    String result = convertObjectToJson(mapper, new Object(), "{}");
+
+    assertEquals("{}", result);
+  }
+
+  // ── convertStringToObject(ObjectMapper, String, TypeReference, T) ─────────
+
+  @Test
+  void givenValidJson_whenConvertStringToObjectWithTypeRef_returnDeserializedMap() {
+    ObjectMapper mapper = new ObjectMapper();
+    String json = "{\"status\":\"active\",\"amount\":150}";
+
+    Map<String, Object> result = convertStringToObject(
+            mapper, json, new TypeReference<>() {}, new LinkedHashMap<>());
+
+    assertEquals("active", result.get("status"));
+    assertEquals(150, result.get("amount"));
+  }
+
+  @Test
+  void givenNullJson_whenConvertStringToObjectWithTypeRef_returnFallback() {
+    ObjectMapper mapper = new ObjectMapper();
+    Map<String, Object> fallback = new LinkedHashMap<>();
+
+    Map<String, Object> result = convertStringToObject(
+            mapper, null, new TypeReference<>() {}, fallback);
+
+    assertEquals(fallback, result);
+  }
+
+  @Test
+  void givenBlankJson_whenConvertStringToObjectWithTypeRef_returnFallback() {
+    ObjectMapper mapper = new ObjectMapper();
+    Map<String, Object> fallback = new LinkedHashMap<>();
+
+    Map<String, Object> result = convertStringToObject(
+            mapper, "   ", new TypeReference<>() {}, fallback);
+
+    assertEquals(fallback, result);
+  }
+
+  @Test
+  void givenInvalidJson_whenConvertStringToObjectWithTypeRef_returnFallback() {
+    ObjectMapper mapper = new ObjectMapper();
+    Map<String, Object> fallback = new LinkedHashMap<>();
+
+    Map<String, Object> result = convertStringToObject(
+            mapper, "not valid json", new TypeReference<>() {}, fallback);
+
+    assertEquals(fallback, result);
   }
 
 }

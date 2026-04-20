@@ -4,6 +4,7 @@ package com.iris.common.lib.interceptor;
 import com.iris.common.lib.dtos.response.Header;
 import com.iris.common.lib.dtos.response.ResponseMapper;
 import com.iris.common.lib.enums.MdcKeys;
+import com.iris.common.lib.utils.DataMasker;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.core.MethodParameter;
@@ -35,7 +36,12 @@ public class HttpResponseDecorator implements ResponseBodyAdvice<Object> {
         if (isSwaggerPath(path)) {
             return body;
         }
-        log.info("Response Payload: {} ", body);
+
+        if (body instanceof byte[]) {
+            return body;
+        }
+
+        log.info("Response Payload: {} ", DataMasker.maskObject(body));
 
         if (body instanceof ResponseEntity<?> || body instanceof ResponseMapper<?>) {
             return body;
@@ -51,12 +57,12 @@ public class HttpResponseDecorator implements ResponseBodyAdvice<Object> {
     private boolean isSwaggerPath(String path) {
         return path != null && (
                 path.startsWith("/swagger-ui") ||
-                        path.startsWith("/v3/api-docs") ||
-                        path.startsWith("/v2/api-docs") ||
-                        path.startsWith("/api-docs") ||
-                        path.startsWith("/swagger-resources") ||
-                        path.startsWith("/webjars/") ||
-                        path.equals("/swagger-ui.html")
+                        path.contains("/v3/api-docs") ||
+                        path.contains("/v2/api-docs") ||
+                        path.contains("/api-docs") ||
+                        path.contains("/swagger-resources") ||
+                        path.contains("/webjars/") ||
+                        path.endsWith("/swagger-ui.html")
         );
     }
 

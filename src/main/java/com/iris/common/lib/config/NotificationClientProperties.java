@@ -26,7 +26,7 @@ public class NotificationClientProperties {
     private String baseUrl;
 
     @NotBlank(message = "notification.client.uri must be set")
-    private String uri = "/notifications/publish";
+    private String uri = "/notifications";
 
     private Duration connectTimeout = Duration.ofSeconds(2);
     private Duration readTimeout = Duration.ofSeconds(5);

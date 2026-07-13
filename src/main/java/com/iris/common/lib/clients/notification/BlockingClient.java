@@ -1,12 +1,13 @@
-package com.iris.common.lib.client;
+package com.iris.common.lib.clients.notification;
 
-import com.iris.common.lib.config.NotificationClientProperties;
+
 import com.iris.common.lib.dtos.request.NotificationEvent;
 import com.iris.common.lib.dtos.response.NotificationEventResponse;
 import com.iris.common.lib.exception.NotificationClientException;
 import com.iris.common.lib.exception.NotificationServerException;
 import com.iris.common.lib.headers.NotificationHeaderProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.ResourceAccessException;
@@ -20,8 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
-public class BlockingNotificationClient implements NotificationClient {
+class BlockingClient implements NotificationClient {
 
     private final RestClient restClient;
     private final NotificationClientProperties props;
@@ -38,8 +40,11 @@ public class BlockingNotificationClient implements NotificationClient {
         headerProviders.forEach(p -> headers.putAll(p.resolve(event)));
         headers.putAll(extraHeaders);
 
+        log.debug("Sending notification [channel={}, templateId={}, correlationId={}]",
+                event.channel(), event.templateId(), event.correlationId());
+
         try {
-            return restClient.post()
+            NotificationEventResponse response = restClient.post()
                     .uri(props.getUri())
                     .headers(h -> headers.forEach(h::add))
                     .body(event)
@@ -51,6 +56,9 @@ public class BlockingNotificationClient implements NotificationClient {
                         throw new NotificationServerException(res.getStatusCode(), readBody(res));
                     })
                     .body(NotificationEventResponse.class);
+
+            log.debug("Notification accepted [correlationId={}]", event.correlationId());
+            return response;
         } catch (ResourceAccessException ex) {
             throw new NotificationServerException("Notification service unreachable", ex);
         }

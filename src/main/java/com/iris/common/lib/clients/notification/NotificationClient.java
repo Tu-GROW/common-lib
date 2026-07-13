@@ -1,4 +1,4 @@
-package com.iris.common.lib.client;
+package com.iris.common.lib.clients.notification;
 
 import com.iris.common.lib.dtos.request.NotificationEvent;
 import com.iris.common.lib.dtos.response.NotificationEventResponse;
@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
-public interface NotificationClient {
+interface NotificationClient {
     NotificationEventResponse send(NotificationEvent event);
     NotificationEventResponse send(NotificationEvent event, Map<String, String> extraHeaders);
 

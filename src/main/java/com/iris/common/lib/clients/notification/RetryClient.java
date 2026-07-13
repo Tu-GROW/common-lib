@@ -1,17 +1,18 @@
-package com.iris.common.lib.client;
+package com.iris.common.lib.clients.notification;
 
-import com.iris.common.lib.config.NotificationClientProperties;
 import com.iris.common.lib.dtos.request.NotificationEvent;
 import com.iris.common.lib.dtos.response.NotificationEventResponse;
 import com.iris.common.lib.exception.NotificationServerException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
-public class RetryingNotificationClient implements NotificationClient {
+class RetryClient implements NotificationClient {
 
     private final NotificationClient delegate;
     private final NotificationClientProperties.Retry retry;
@@ -26,6 +27,8 @@ public class RetryingNotificationClient implements NotificationClient {
         NotificationServerException lastException = null;
         for (int attempt = 0; attempt < retry.getMaxAttempts(); attempt++) {
             if (attempt > 0) {
+                log.warn("Retrying notification send (attempt {}/{}) [correlationId={}, backoff={}ms]",
+                        attempt + 1, retry.getMaxAttempts(), event.correlationId(), retry.getBackoff().toMillis());
                 sleep(retry.getBackoff().toMillis());
             }
             try {
@@ -47,7 +50,10 @@ public class RetryingNotificationClient implements NotificationClient {
     public Mono<NotificationEventResponse> sendAsync(NotificationEvent event, Map<String, String> extraHeaders) {
         return Mono.defer(() -> delegate.sendAsync(event, extraHeaders))
                    .retryWhen(Retry.backoff(retry.getMaxAttempts() - 1L, retry.getBackoff())
-                           .filter(ex -> ex instanceof NotificationServerException));
+                           .filter(ex -> ex instanceof NotificationServerException)
+                           .doBeforeRetry(signal -> log.warn(
+                                   "Retrying notification send (attempt {}/{}) [correlationId={}]",
+                                   signal.totalRetries() + 1, retry.getMaxAttempts(), event.correlationId())));
     }
 
     private static void sleep(long millis) {

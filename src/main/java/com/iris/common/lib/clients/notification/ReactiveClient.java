@@ -1,12 +1,12 @@
-package com.iris.common.lib.client;
+package com.iris.common.lib.clients.notification;
 
-import com.iris.common.lib.config.NotificationClientProperties;
 import com.iris.common.lib.dtos.request.NotificationEvent;
 import com.iris.common.lib.dtos.response.NotificationEventResponse;
 import com.iris.common.lib.exception.NotificationClientException;
 import com.iris.common.lib.exception.NotificationServerException;
 import com.iris.common.lib.headers.NotificationHeaderProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -15,8 +15,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
-public class ReactiveNotificationClient implements NotificationClient {
+class ReactiveClient implements NotificationClient {
 
     private final WebClient webClient;
     private final NotificationClientProperties props;
@@ -54,6 +55,9 @@ public class ReactiveNotificationClient implements NotificationClient {
                 .onStatus(HttpStatusCode::is5xxServerError, res ->
                         res.bodyToMono(String.class).defaultIfEmpty("").map(body ->
                                 new NotificationServerException(res.statusCode(), body)))
-                .bodyToMono(NotificationEventResponse.class);
+                .bodyToMono(NotificationEventResponse.class)
+                .doOnSubscribe(s -> log.debug("Sending notification [channel={}, templateId={}, correlationId={}]",
+                        event.channel(), event.templateId(), event.correlationId()))
+                .doOnNext(r -> log.debug("Notification accepted [correlationId={}]", event.correlationId()));
     }
 }

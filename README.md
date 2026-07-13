@@ -6,7 +6,7 @@ Shared utilities and integrations for IRIS/Tu-GROW services, including the Notif
 
 ## Notification Client SDK
 
-A zero-boilerplate client for publishing events to the **notification-engine**. Supports both blocking and reactive sends. Auto-configured by Spring Boot — no `@Autowired` needed at the call site.
+A lightweight SDK for sending notifications via the **notification-engine**. Auto-configured by Spring Boot — add your config, extend one class, and start sending.
 
 ### Requirements
 
@@ -27,7 +27,18 @@ Add the dependency to your `pom.xml`:
 </dependency>
 ```
 
-The library is hosted on GitHub Packages. Make sure your `~/.m2/settings.xml` has credentials for the `github` repository:
+The library is hosted on GitHub Packages. Add the repository to your `pom.xml`:
+
+```xml
+<repositories>
+    <repository>
+        <id>github</id>
+        <url>https://maven.pkg.github.com/Tu-GROW/common-lib</url>
+    </repository>
+</repositories>
+```
+
+And add your credentials to `~/.m2/settings.xml`:
 
 ```xml
 <servers>
@@ -39,107 +50,82 @@ The library is hosted on GitHub Packages. Make sure your `~/.m2/settings.xml` ha
 </servers>
 ```
 
-And add the repository to your `pom.xml`:
-
-```xml
-<repositories>
-    <repository>
-        <id>github</id>
-        <url>https://maven.pkg.github.com/Tu-GROW/common-lib</url>
-    </repository>
-</repositories>
-```
-
 ---
 
 ### Configuration
 
-Add the following to your service's `application.yaml`:
+Add the following to your `application.yaml`:
 
 ```yaml
 notification:
   client:
-    # Required — must be a valid HTTP or HTTPS URL
+    # Required
     base-url: https://notification-engine.internal
 
-    # Optional — endpoint path, defaults to /notifications
-    uri: /notifications
+    # Optional — SYNC (default) or ASYNC
+    mode: SYNC
 
-    # Optional — connection and read timeouts, defaults shown
+    # Optional — defaults shown
+    uri: /notifications
     connect-timeout: 2s
     read-timeout: 5s
 
-    # Optional — static headers sent on every request
+    # Optional — sent on every request
     default-headers:
       x-api-key: your-api-key-here
       x-source-system: my-service
 
-    # Optional — retry on server errors (5xx / network failures)
+    # Optional — retry on server errors
     retry:
       enabled: true       # default: true
-      max-attempts: 3     # default: 3, minimum: 1
+      max-attempts: 3     # default: 3
       backoff: 300ms      # default: 300ms
 ```
 
-**Minimal config** — only `base-url` is required:
-
-```yaml
-notification:
-  client:
-    base-url: https://notification-engine.internal
-    default-headers:
-      x-api-key: your-api-key-here
-```
-
-If `base-url` is not set, the SDK does not activate and no beans are registered.
-
----
-
-### Reactive support
-
-The SDK detects WebFlux automatically. If `spring-boot-starter-webflux` is on your classpath, a `WebClient`-based implementation is registered and `sendAsync` runs on the reactive pipeline end-to-end. If not, `sendAsync` wraps the blocking call on a bounded-elastic scheduler.
-
-No additional configuration is needed — the same `application.yaml` applies in both cases.
+`SYNC` uses a blocking HTTP client. `ASYNC` uses a non-blocking client and requires `spring-boot-starter-webflux` on the classpath. If `base-url` is not set the SDK does not activate.
 
 ---
 
 ### Usage
 
-The SDK exposes a static facade — no injection required.
-
-#### Blocking send
+Extend `Notification` and add one method per notification scenario. Each method builds a `NotificationEvent` and calls `send()` — that's the only call site for sending notifications.
 
 ```java
-import com.iris.common.lib.client.Notifications;
-import com.iris.common.lib.dtos.request.NotificationEvent;
-import com.iris.common.lib.enums.Channel;
-import com.iris.common.lib.enums.Priority;
+@Service
+public class NotificationService extends Notification {
 
-NotificationEvent event = NotificationEvent.builder()
-        .channel(Channel.EMAIL)
-        .recipientRef("user@example.com")
-        .templateId("welcome-email")
-        .templateData(Map.of("name", "Jane"))
-        .priority(Priority.NORMAL)
-        .correlationId(requestId)
-        .build();
+    public Mono<NotificationEventResponse> sendOtp(String recipientId, String phone, String otp, String correlationId) {
+        return send(NotificationEvent.builder()
+                .eventId(UUID.randomUUID())
+                .channel(Channel.SMS)
+                .recipientId(recipientId)
+                .recipientRef(phone)
+                .templateId("otp-verification")
+                .templateData(Map.of("otp", otp))
+                .priority(Priority.HIGH)
+                .correlationId(correlationId)
+                .build());
+    }
 
-NotificationEventResponse response = Notifications.send(event);
+    public Mono<NotificationEventResponse> sendWelcomeEmail(String recipientId, String email, String name, String correlationId) {
+        return send(NotificationEvent.builder()
+                .eventId(UUID.randomUUID())
+                .channel(Channel.EMAIL)
+                .recipientId(recipientId)
+                .recipientRef(email)
+                .templateId("welcome-email")
+                .templateData(Map.of("name", name))
+                .priority(Priority.NORMAL)
+                .correlationId(correlationId)
+                .build());
+    }
+}
 ```
 
-#### Reactive send
+To pass per-request headers (e.g. an idempotency key), use the overload:
 
 ```java
-Notifications.sendAsync(event)
-        .subscribe(response -> log.info("Notification queued: {}", response.status()));
-```
-
-#### With extra headers (per-request override)
-
-```java
-Notifications.send(event, Map.of("x-idempotency-key", UUID.randomUUID().toString()));
-
-Notifications.sendAsync(event, Map.of("x-idempotency-key", UUID.randomUUID().toString()));
+return send(event, Map.of("x-idempotency-key", UUID.randomUUID().toString()));
 ```
 
 ---
@@ -167,26 +153,23 @@ Notifications.sendAsync(event, Map.of("x-idempotency-key", UUID.randomUUID().toS
 
 | Exception | When thrown |
 |---|---|
-| `NotificationClientException` | 4xx response from the notification-engine — not retried |
-| `NotificationServerException` | 5xx response or network failure — retried per `retry` config |
+| `NotificationClientException` | 4xx response — bad request, not retried |
+| `NotificationServerException` | 5xx or network failure — retried per `retry` config |
 
 ```java
-try {
-    Notifications.send(event);
-} catch (NotificationClientException e) {
-    // bad request — log and fail
-    log.error("Invalid notification event [{}]: {}", e.getStatus(), e.getBody());
-} catch (NotificationServerException e) {
-    // server unavailable after retries exhausted
-    log.error("Notification engine unavailable: {}", e.getMessage());
-}
+notificationService.sendOtp(recipientId, phone, otp, correlationId)
+        .doOnError(NotificationClientException.class, e ->
+                log.error("Invalid notification [{}]: {}", e.getStatus(), e.getBody()))
+        .doOnError(NotificationServerException.class, e ->
+                log.error("Notification engine unavailable: {}", e.getMessage()))
+        .subscribe();
 ```
 
 ---
 
-### Custom header provider
+### Dynamic headers
 
-To inject dynamic headers on every request (e.g. a tracing token from MDC), implement `NotificationHeaderProvider` and register it as a Spring bean:
+To inject headers on every request (e.g. a trace ID from MDC), implement `NotificationHeaderProvider` and register it as a Spring bean:
 
 ```java
 @Component
@@ -200,16 +183,3 @@ public class CorrelationHeaderProvider implements NotificationHeaderProvider {
 ```
 
 Multiple providers are supported and applied in `@Order` order.
-
----
-
-### Overriding the auto-configured client
-
-If you need full control, declare your own `NotificationClient` bean — the auto-configuration backs off:
-
-```java
-@Bean
-NotificationClient notificationClient() {
-    // your custom implementation
-}
-```

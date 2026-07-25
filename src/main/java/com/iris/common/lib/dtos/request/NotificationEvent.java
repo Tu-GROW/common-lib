@@ -13,6 +13,7 @@ import java.util.UUID;
 @Builder
 public record NotificationEvent(
         UUID eventId,
+        String eventType,
         Channel channel,
         String recipientId,
         String recipientRef,

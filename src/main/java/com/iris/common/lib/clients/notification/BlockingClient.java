@@ -25,7 +25,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 class BlockingClient implements NotificationClient {
 
-    private final RestClient restClient;
+    private final RestClient notificationRestClient;
     private final NotificationClientProperties props;
     private final List<NotificationHeaderProvider> headerProviders;
 
@@ -44,7 +44,7 @@ class BlockingClient implements NotificationClient {
                 event.channel(), event.templateId(), event.correlationId());
 
         try {
-            NotificationEventResponse response = restClient.post()
+            NotificationEventResponse response = notificationRestClient.post()
                     .uri(props.getUri())
                     .headers(h -> headers.forEach(h::add))
                     .body(event)

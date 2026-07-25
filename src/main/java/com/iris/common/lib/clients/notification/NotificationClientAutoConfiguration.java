@@ -53,7 +53,7 @@ class NotificationClientAutoConfiguration {
             NotificationClient base = new BlockingClient(notificationRestClient, props, resolved);
             NotificationClient client = props.getRetry().isEnabled() ? new RetryClient(base, props.getRetry()) : base;
             Notification.init(client, props);
-            log.info("Notification client initialized [mode={}]", props.getMode());
+            log.info("Blocking Notification client initialized [mode={}]", props.getMode());
             return client;
         }
     }
@@ -84,7 +84,7 @@ class NotificationClientAutoConfiguration {
             NotificationClient base = new ReactiveClient(notificationWebClient, props, resolved);
             NotificationClient client = props.getRetry().isEnabled() ? new RetryClient(base, props.getRetry()) : base;
             Notification.init(client, props);
-            log.info("Notification client initialized [mode={}]", props.getMode());
+            log.info("Reactive Notification client initialized [mode={}]", props.getMode());
             return client;
         }
     }

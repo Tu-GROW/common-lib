@@ -19,7 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 class ReactiveClient implements NotificationClient {
 
-    private final WebClient webClient;
+    private final WebClient notificationWebClient;
     private final NotificationClientProperties props;
     private final List<NotificationHeaderProvider> headerProviders;
 
@@ -44,7 +44,7 @@ class ReactiveClient implements NotificationClient {
         headerProviders.forEach(p -> headers.putAll(p.resolve(event)));
         headers.putAll(extraHeaders);
 
-        return webClient.post()
+        return notificationWebClient.post()
                 .uri(props.getUri())
                 .headers(h -> headers.forEach(h::add))
                 .bodyValue(event)

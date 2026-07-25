@@ -33,7 +33,19 @@ class NotificationClientAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        RestClient notificationRestClient(NotificationClientProperties props) {
+        NotificationClient notificationClient(NotificationClientProperties props,
+                                              ObjectProvider<NotificationHeaderProvider> providers) {
+
+            RestClient notificationRestClient = buildRestClient(props);
+            List<NotificationHeaderProvider> resolved = providers.orderedStream().toList();
+            NotificationClient base = new BlockingClient(notificationRestClient, props, resolved);
+            NotificationClient client = props.getRetry().isEnabled() ? new RetryClient(base, props.getRetry()) : base;
+            Notification.init(client, props);
+            log.info("Blocking Notification client initialized [mode={}]", props.getMode());
+            return client;
+        }
+
+        private static RestClient buildRestClient(NotificationClientProperties props) {
             ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.DEFAULTS
                     .withConnectTimeout(props.getConnectTimeout())
                     .withReadTimeout(props.getReadTimeout());
@@ -43,19 +55,6 @@ class NotificationClientAutoConfiguration {
                     .requestFactory(ClientHttpRequestFactories.get(settings))
                     .build();
         }
-
-        @Bean
-        @ConditionalOnMissingBean
-        NotificationClient notificationClient(RestClient notificationRestClient,
-                                              NotificationClientProperties props,
-                                              ObjectProvider<NotificationHeaderProvider> providers) {
-            List<NotificationHeaderProvider> resolved = providers.orderedStream().toList();
-            NotificationClient base = new BlockingClient(notificationRestClient, props, resolved);
-            NotificationClient client = props.getRetry().isEnabled() ? new RetryClient(base, props.getRetry()) : base;
-            Notification.init(client, props);
-            log.info("Blocking Notification client initialized [mode={}]", props.getMode());
-            return client;
-        }
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -63,8 +62,19 @@ class NotificationClientAutoConfiguration {
     static class ReactiveConfiguration {
 
         @Bean
-        @ConditionalOnMissingBean(name = "notificationWebClient")
-        WebClient notificationWebClient(NotificationClientProperties props) {
+        @ConditionalOnMissingBean
+        NotificationClient notificationClient(NotificationClientProperties props,
+                                              ObjectProvider<NotificationHeaderProvider> providers) {
+            WebClient notificationWebClient = buildWebClient(props);
+            List<NotificationHeaderProvider> resolved = providers.orderedStream().toList();
+            NotificationClient base = new ReactiveClient(notificationWebClient, props, resolved);
+            NotificationClient client = props.getRetry().isEnabled() ? new RetryClient(base, props.getRetry()) : base;
+            Notification.init(client, props);
+            log.info("Reactive Notification client initialized [mode={}]", props.getMode());
+            return client;
+        }
+
+        private static WebClient buildWebClient(NotificationClientProperties props) {
             HttpClient httpClient = HttpClient.create()
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) props.getConnectTimeout().toMillis())
                     .responseTimeout(props.getReadTimeout());
@@ -73,19 +83,6 @@ class NotificationClientAutoConfiguration {
                     .baseUrl(props.getBaseUrl())
                     .clientConnector(new ReactorClientHttpConnector(httpClient))
                     .build();
-        }
-
-        @Bean
-        @ConditionalOnMissingBean
-        NotificationClient notificationClient(WebClient notificationWebClient,
-                                              NotificationClientProperties props,
-                                              ObjectProvider<NotificationHeaderProvider> providers) {
-            List<NotificationHeaderProvider> resolved = providers.orderedStream().toList();
-            NotificationClient base = new ReactiveClient(notificationWebClient, props, resolved);
-            NotificationClient client = props.getRetry().isEnabled() ? new RetryClient(base, props.getRetry()) : base;
-            Notification.init(client, props);
-            log.info("Reactive Notification client initialized [mode={}]", props.getMode());
-            return client;
         }
     }
 }

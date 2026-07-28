@@ -83,6 +83,7 @@ public final class DataMasker {
         if (value == null) return null;
         value = JWT_PATTERN.matcher(value).replaceAll(m -> maskToken(m.group()));
         value = EMAIL_PATTERN.matcher(value).replaceAll(m -> maskEmail(m.group()));
+        value = PHONE_PATTERN.matcher(value).replaceAll(m -> maskPhone(m.group()));
         return value;
     }
 

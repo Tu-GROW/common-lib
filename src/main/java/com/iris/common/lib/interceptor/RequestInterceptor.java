@@ -1,6 +1,7 @@
 package com.iris.common.lib.interceptor;
 
 import com.iris.common.lib.enums.MdcKeys;
+import com.iris.common.lib.utils.DataMasker;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -31,7 +32,7 @@ public class RequestInterceptor implements HandlerInterceptor {
 
         }
 
-        log.info("New incoming requestId: {} ", requestId);
+        log.info("New incoming requestId: {} Method: {} Url: {}", requestId, request.getMethod(), request.getRequestURI());
 
         MDC.put(MdcKeys.REQUEST_ID.getKey(), requestId);
         return true;

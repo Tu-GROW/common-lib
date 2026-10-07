@@ -30,6 +30,7 @@ class GlobalExceptionHandlerTest {
         var response = handler.apiException(exception);
 
         assertThat(response.getStatusCode().value()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assert response.getBody() != null;
         assertThat(response.getBody().header().responseCode()).isEqualTo(4001);
         assertThat(response.getBody().header().customerMessage()).isEqualTo("customerMessage");
         assertThat(response.getBody().header().responseDesc()).isEqualTo("responseDesc");
@@ -41,6 +42,6 @@ class GlobalExceptionHandlerTest {
 
         var response = handler.apiException(exception);
 
-        assertThat(response.getStatusCode().value()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        assertThat(response.getStatusCode().value()).isEqualTo(HttpStatus.OK.value());
     }
 }

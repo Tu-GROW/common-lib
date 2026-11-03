@@ -4,8 +4,8 @@ import static com.iris.common.lib.utils.Helpers.convertObjectToJson;
 import static com.iris.common.lib.utils.Helpers.convertStringToObject;
 import static com.iris.common.lib.utils.Helpers.readFromResourcesFolder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,17 +28,13 @@ class HelperTest {
   @Test
   void givenInvalidObject_whenConvertObjectToJson_throwException() {
     Object obj = new Object();
-    assertThrows(RuntimeException.class, () -> {
-      convertObjectToJson(obj);
-    }, "Failed to convert " + obj + " to Json String");
+    assertThrows(RuntimeException.class, () -> convertObjectToJson(obj), "Failed to convert " + obj + " to Json String");
   }
 
   @Test
   void givenFileDoesNotExist_whenReadFromResourceFolder_throwException(){
     String filePath = "somefile.txt";
-    assertThrows(RuntimeException.class, () -> {
-     readFromResourcesFolder(filePath);
-    }, "Could not read " + filePath + " from resources folder");
+    assertThrows(RuntimeException.class, () -> readFromResourcesFolder(filePath), "Could not read " + filePath + " from resources folder");
   }
 
   @Test
@@ -58,9 +54,32 @@ class HelperTest {
   @Test
   void givenJsonString_whenConvertToAnObject_throwException() {
     String jsonString = "{\"name\":\"test\",\"age\":10}";
-    assertThrows(RuntimeException.class, () -> {
-      convertStringToObject(jsonString, RandomObject.class);
-    });
+    assertThrows(RuntimeException.class, () -> convertStringToObject(jsonString, RandomObject.class));
+  }
+
+  @Test
+  void givenMsisdn_whenMaskMsisdn_returnMaskedString() {
+    Helpers helpers = new Helpers();
+
+    String masked = helpers.maskMsisdn("2547123 and 2549876");
+
+    assertEquals("254**** and 254****", masked);
+  }
+
+  @Test
+  void givenNullMsisdn_whenMaskMsisdn_throwRuntimeException() {
+    Helpers helpers = new Helpers();
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> helpers.maskMsisdn(null));
+
+    assertTrue(exception.getMessage().contains("text"));
+  }
+
+  @Test
+  void givenDate_whenDate_returnTimestampInExpectedFormat() {
+    String result = Helpers.date();
+
+    assertTrue(result.matches("\\d{14}"));
   }
 
   // ── convertObjectToJson(ObjectMapper, Object, String) ─────────────────────
@@ -77,7 +96,6 @@ class HelperTest {
 
   @Test
   void givenUnserializableObject_whenConvertObjectToJsonWithMapper_returnFallback() {
-    // ObjectMapper fails on empty beans by default — Object() has no properties
     ObjectMapper mapper = new ObjectMapper();
 
     String result = convertObjectToJson(mapper, new Object(), "{}");
@@ -131,5 +149,4 @@ class HelperTest {
 
     assertEquals(fallback, result);
   }
-
 }

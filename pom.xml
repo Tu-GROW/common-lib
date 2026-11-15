@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.Tu-GROW.common</groupId>
 	<artifactId>lib</artifactId>
-	<version>1.0.11</version>
+	<version>1.0.15</version>
 	<name>library</name>
 	<description>Tu-GROW Common Library</description>
 	<properties>
@@ -19,6 +19,12 @@
 		<maven.compiler.target>21</maven.compiler.target>
 	</properties>
 	<dependencies>
+
+		<dependency>
+			<groupId>com.fasterxml.uuid</groupId>
+			<artifactId>java-uuid-generator</artifactId>
+			<version>5.1.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -67,6 +73,71 @@
 
 	<build>
 		<plugins>
+			<!-- JaCoCo Code Coverage Plugin -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.12</version>
+				<configuration>
+					<excludes>
+						<exclude>**/enums/**</exclude>
+						<exclude>**/dtos/**</exclude>
+						<exclude>**/utils/GlobalConstants.class</exclude>
+						<exclude>**/exception/ResourceNotFoundException.class</exclude>
+						<exclude>**/exception/NotificationClientException.class</exclude>
+						<exclude>**/exception/NotificationServerException.class</exclude>
+						<exclude>**/clients/notification/NotificationClient.class</exclude>
+						<exclude>**/clients/notification/NotificationClientProperties.class</exclude>
+						<exclude>**/clients/notification/NotificationClientProperties$*.class</exclude>
+						<exclude>**/config/ClockProperties.class</exclude>
+						<exclude>**/headers/NotificationHeaderProvider.class</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>jacoco-check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.90</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Sonar Scanner Maven Plugin -->
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.11.0.3922</version>
+			</plugin>
+
 			<!-- Spring Boot Maven Plugin -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

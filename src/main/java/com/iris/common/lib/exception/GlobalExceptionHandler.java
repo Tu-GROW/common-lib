@@ -75,6 +75,9 @@ public class GlobalExceptionHandler {
                 .header(header)
                 .body(null)
                 .build();
+        if(exception.getHttpStatusCode() != null) {
+            return ResponseEntity.status(exception.getHttpStatusCode()).body(response);
+        }
         return ResponseEntity.ok(response);
     }
 

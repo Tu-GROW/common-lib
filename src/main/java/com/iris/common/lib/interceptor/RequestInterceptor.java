@@ -1,10 +1,10 @@
 package com.iris.common.lib.interceptor;
 
 import com.iris.common.lib.enums.MdcKeys;
+import com.iris.common.lib.utils.DataMasker;
+import com.iris.common.lib.utils.UuidGenerator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.util.UUID;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +27,11 @@ public class RequestInterceptor implements HandlerInterceptor {
         String requestId = request.getHeader(X_REQUEST_ID);
         MDC.put(MdcKeys.START_TIME.getKey(), String.valueOf(System.currentTimeMillis()));
         if (requestId == null || requestId.isEmpty()) {
-            requestId = UUID.randomUUID().toString();
+            requestId = UuidGenerator.generateV7().toString();
 
         }
 
-        log.info("New incoming requestId: {} ", requestId);
+        log.info("New incoming requestId: {} Method: {} Url: {}", requestId, request.getMethod(), request.getRequestURI());
 
         MDC.put(MdcKeys.REQUEST_ID.getKey(), requestId);
         return true;

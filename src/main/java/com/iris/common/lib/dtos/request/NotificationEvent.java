@@ -19,6 +19,7 @@ public record NotificationEvent(
         String recipientRef,
         List<String> recipientIds,
         String templateId,
+        Integer version,
         Map<String, Object> templateData,
         Priority priority,
         Instant scheduledAt,

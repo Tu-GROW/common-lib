@@ -12,11 +12,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
 import org.springframework.boot.hibernate.autoconfigure.HibernatePropertiesCustomizer;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.orm.jpa.JpaTransactionManager;
 
 import javax.sql.DataSource;
@@ -26,9 +28,11 @@ import java.util.Base64;
 /**
  * Registers a singleton RefGenerator so any service can just @Autowired it.
  * Disable with refgen.enabled=false; override by declaring your own bean.
+ *
+ * Class names are referenced as class literals (not strings) so that a Spring Boot upgrade that moves a
+ * class breaks compilation instead of silently switching a feature off.
  */
-@AutoConfiguration(after = DataSourceAutoConfiguration.class,
-        afterName = "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration")
+@AutoConfiguration(after = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @EnableConfigurationProperties(RefProperties.class)
 @ConditionalOnProperty(prefix = "refgen", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class RefAutoConfiguration {
@@ -51,7 +55,7 @@ public class RefAutoConfiguration {
             throw new IllegalStateException("refgen.master-key is required (base64, >= 32 bytes, same on every instance)");
         byte[] key = Base64.getDecoder().decode(p.getMasterKey().trim());   // RefCipher enforces >= 32 bytes
         return new RefGenerator(allocator, key, Clock.system(RefGenerator.ZONE),
-                                       p.getBlockSize(), p.isCheckChar(), p.getBlocklist());
+                p.getBlockSize(), p.isCheckChar(), p.getBlocklist());
     }
 
     @Bean
@@ -62,7 +66,7 @@ public class RefAutoConfiguration {
 
     /** Spring Data JPA allocator (refgen.allocator=jpa): own REQUIRES_NEW transaction on the app's EMF. */
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnClass(name = "org.springframework.orm.jpa.JpaTransactionManager")
+    @ConditionalOnClass(JpaTransactionManager.class)
     @ConditionalOnProperty(prefix = "refgen", name = "allocator", havingValue = "jpa")
     static class JpaAllocatorConfig {
         @Bean
@@ -78,8 +82,7 @@ public class RefAutoConfiguration {
      * Turn off with refgen.inject-jpa=false.
      */
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnClass(name = {"org.hibernate.Interceptor",
-            "org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer"})
+    @ConditionalOnClass({Interceptor.class, HibernatePropertiesCustomizer.class})
     @ConditionalOnProperty(prefix = "refgen", name = "inject-jpa", havingValue = "true", matchIfMissing = true)
     static class HibernateHook {
         @Bean
@@ -93,8 +96,8 @@ public class RefAutoConfiguration {
                     props.put(AvailableSettings.INTERCEPTOR, RefHibernateInterceptor.chain(user, ours));
                 } else {
                     throw new IllegalStateException("hibernate.session_factory.interceptor is set to " + existing
-                        + " (not an Interceptor instance), so it cannot be combined. Set refgen.inject-jpa=false"
-                        + " and call RefInjector.inject(entity) yourself.");
+                            + " (not an Interceptor instance), so it cannot be combined. Set refgen.inject-jpa=false"
+                            + " and call RefInjector.inject(entity) yourself.");
                 }
             };
         }
@@ -102,7 +105,7 @@ public class RefAutoConfiguration {
 
     /** Spring Data JDBC: applies to all aggregates automatically. */
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnClass(name = "org.springframework.data.relational.core.mapping.event.BeforeConvertCallback")
+    @ConditionalOnClass(BeforeConvertCallback.class)
     static class JdbcHook {
         @Bean
         @ConditionalOnMissingBean

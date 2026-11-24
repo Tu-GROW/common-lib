@@ -1,2 +1,3 @@
-com.iris.common.lib.config.ClockAutoConfiguration
-com.iris.common.lib.clients.notification.NotificationClientAutoConfiguration
+com.iris.common.lib.autoconfigure.ClockAutoConfiguration
+com.iris.common.lib.autoconfigure.NotificationClientAutoConfiguration
+com.iris.common.lib.autoconfigure.RefAutoConfiguration

@@ -3,6 +3,7 @@ package com.iris.common.lib.clients.notification;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.iris.common.lib.config.NotificationClientProperties;
 import com.iris.common.lib.dtos.request.NotificationEvent;
 import com.iris.common.lib.dtos.response.NotificationEventResponse;
 import com.iris.common.lib.enums.Channel;
@@ -27,7 +28,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 
 class BlockingClientTest {

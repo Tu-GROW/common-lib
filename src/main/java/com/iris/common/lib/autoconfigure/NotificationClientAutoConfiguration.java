@@ -1,5 +1,7 @@
-package com.iris.common.lib.clients.notification;
+package com.iris.common.lib.autoconfigure;
 
+import com.iris.common.lib.clients.notification.*;
+import com.iris.common.lib.config.NotificationClientProperties;
 import com.iris.common.lib.headers.NotificationHeaderProvider;
 import io.netty.channel.ChannelOption;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +28,7 @@ import java.util.List;
 @AutoConfiguration
 @EnableConfigurationProperties(NotificationClientProperties.class)
 @ConditionalOnProperty(prefix = "notification.client", name = "base-url")
-class NotificationClientAutoConfiguration {
+public class NotificationClientAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnMissingClass("org.springframework.web.reactive.function.client.WebClient")

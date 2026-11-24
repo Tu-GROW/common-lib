@@ -1,5 +1,6 @@
-package com.iris.common.lib.config;
+package com.iris.common.lib.autoconfigure;
 
+import com.iris.common.lib.config.ClockProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

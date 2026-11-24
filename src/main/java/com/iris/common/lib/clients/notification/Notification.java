@@ -1,19 +1,20 @@
 package com.iris.common.lib.clients.notification;
 
+import com.iris.common.lib.config.NotificationClientProperties;
 import com.iris.common.lib.dtos.request.NotificationEvent;
 import com.iris.common.lib.dtos.response.NotificationEventResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
-import static com.iris.common.lib.clients.notification.NotificationClientProperties.Mode.ASYNC;
+import static com.iris.common.lib.config.NotificationClientProperties.Mode.ASYNC;
 
 public abstract class Notification {
 
     private static NotificationClient client;
     private static NotificationClientProperties props;
 
-    static void init(NotificationClient c, NotificationClientProperties p) {
+    public static void init(NotificationClient c, NotificationClientProperties p) {
         client = c;
         props = p;
     }

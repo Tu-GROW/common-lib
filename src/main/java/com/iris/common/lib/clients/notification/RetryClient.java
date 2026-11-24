@@ -1,5 +1,6 @@
 package com.iris.common.lib.clients.notification;
 
+import com.iris.common.lib.config.NotificationClientProperties;
 import com.iris.common.lib.dtos.request.NotificationEvent;
 import com.iris.common.lib.dtos.response.NotificationEventResponse;
 import com.iris.common.lib.exception.NotificationServerException;
@@ -12,7 +13,7 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-class RetryClient implements NotificationClient {
+public class RetryClient implements NotificationClient {
 
     private final NotificationClient delegate;
     private final NotificationClientProperties.Retry retry;

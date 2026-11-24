@@ -1,5 +1,6 @@
 package com.iris.common.lib.config;
 
+import com.iris.common.lib.autoconfigure.ClockAutoConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;

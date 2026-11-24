@@ -1,6 +1,7 @@
 package com.iris.common.lib.clients.notification;
 
 
+import com.iris.common.lib.config.NotificationClientProperties;
 import com.iris.common.lib.dtos.request.NotificationEvent;
 import com.iris.common.lib.dtos.response.NotificationEventResponse;
 import com.iris.common.lib.exception.NotificationClientException;
@@ -23,7 +24,7 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-class BlockingClient implements NotificationClient {
+public class BlockingClient implements NotificationClient {
 
     private final RestClient notificationRestClient;
     private final NotificationClientProperties props;

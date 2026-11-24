@@ -2,6 +2,7 @@ package com.iris.common.lib.clients.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.iris.common.lib.autoconfigure.NotificationClientAutoConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;

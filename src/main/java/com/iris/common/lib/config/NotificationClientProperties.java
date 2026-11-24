@@ -1,4 +1,4 @@
-package com.iris.common.lib.clients.notification;
+package com.iris.common.lib.config;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -16,7 +16,7 @@ import java.util.Map;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "notification.client")
-class NotificationClientProperties {
+public class NotificationClientProperties {
 
     @NotBlank(message = "notification.client.base-url must be set")
     @Pattern(

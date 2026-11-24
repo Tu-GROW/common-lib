@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
-interface NotificationClient {
+public interface NotificationClient {
     NotificationEventResponse send(NotificationEvent event);
     NotificationEventResponse send(NotificationEvent event, Map<String, String> extraHeaders);
 

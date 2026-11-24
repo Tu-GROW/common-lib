@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -159,6 +160,75 @@ class RefGeneratorTest {
         Set<String> seen = new HashSet<>();
         try (var g = gen(new InMemoryBlockAllocator(), clock, 1000, false, Set.of())) {
             for (int i = 0; i < 20_000; i++) assertTrue(seen.add(g.next()));
+        }
+    }
+
+    @Test
+    void rejectsBadConfig() {
+        var alloc = new InMemoryBlockAllocator();
+        var clock = new MutableClock("2026-11-23T06:00:00Z");
+        assertThrows(IllegalArgumentException.class, () -> gen(alloc, clock, 0, false, Set.of()));
+        assertThrows(IllegalArgumentException.class, () -> gen(alloc, clock, RefCipher.DOMAIN, false, Set.of()));
+        assertThrows(IllegalArgumentException.class,
+            () -> new RefGenerator(alloc, new byte[16], clock, 100, false, Set.of()));
+    }
+
+    @Test
+    void yearOutsideWindowFailsLoudly() {
+        var clock = new MutableClock("2050-01-01T00:00:00Z");
+        try (var g = gen(new InMemoryBlockAllocator(), clock, 100, false, Set.of())) {
+            assertThrows(IllegalStateException.class, g::next);
+        }
+    }
+
+    @Test
+    void survivesFailedPrefetch() {
+        var calls = new AtomicInteger();
+        var inner = new InMemoryBlockAllocator();
+        BlockAllocator flaky = (day, size) -> {
+            if (calls.incrementAndGet() == 2) throw new IllegalStateException("store down");   // the prefetch
+            return inner.allocate(day, size);
+        };
+        var clock = new MutableClock("2026-11-23T06:00:00Z");
+        Set<String> seen = new HashSet<>();
+        try (var g = gen(flaky, clock, 10, false, Set.of())) {
+            for (int i = 0; i < 60; i++) assertTrue(seen.add(g.next()));
+        }
+        assertTrue(calls.get() >= 3);
+    }
+
+    @Test
+    void prefetchedBlockForPastDayIsDiscarded() {
+        var clock = new MutableClock("2026-11-23T23:59:59Z");
+        Set<String> seen = new HashSet<>();
+        try (var g = gen(new InMemoryBlockAllocator(), clock, 10, false, Set.of())) {
+            for (int i = 0; i < 9; i++) assertTrue(seen.add(g.next()));   // 9th call triggers the prefetch
+            clock.now = Instant.parse("2026-11-24T00:00:01Z");
+            String next = g.next();
+            assertTrue(next.startsWith("ABR"), next);
+            assertTrue(seen.add(next));
+        }
+    }
+
+    @Test
+    void isValidRejectsMalformedInput() {
+        assertFalse(RefGenerator.isValid("ABU4T7KM2X", false));    // U is not in the alphabet
+        assertFalse(RefGenerator.isValid("ABQ4T7KM2", false));     // too short
+        assertFalse(RefGenerator.isValid("ABQ4T7KM2XX", false));   // too long
+        assertFalse(RefGenerator.isValid("AZZ4T7KM2X", false));    // month 31: impossible date
+        assertFalse(RefGenerator.isValid("ABQ4T7KM2X", true));     // check char missing
+        assertTrue(RefGenerator.isValid("abq-4t7 km2x", false));   // case, dash, space tolerated
+    }
+
+    @Test
+    void isValidRejectsWrongCheckChar() {
+        var clock = new MutableClock("2026-11-23T06:00:00Z");
+        try (var g = gen(new InMemoryBlockAllocator(), clock, 100, true, Set.of())) {
+            String ref = g.next();
+            char last = ref.charAt(10);
+            char other = Base32.A.charAt((Base32.idx(last) + 1) & 31);
+            assertTrue(RefGenerator.isValid(ref, true));
+            assertFalse(RefGenerator.isValid(ref.substring(0, 10) + other, true));
         }
     }
 }

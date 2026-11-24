@@ -59,4 +59,12 @@ class RefInjectorTest {
             assertTrue(RefGenerator.isValid(r.ref, false));
         }
     }
+
+    @Test
+    void exposesFieldNamesAndNextRef() {
+        assertEquals(java.util.Set.of("ref", "baseRef"),
+            new java.util.HashSet<>(java.util.Arrays.asList(RefInjector.fieldNames(Receipt.class))));
+        assertEquals(0, RefInjector.fieldNames(String.class).length);
+        assertEquals("X", new RefInjector(() -> "X").nextRef());
+    }
 }

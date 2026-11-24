@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.SharedEntityManagerCreator;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -28,6 +29,13 @@ public final class JpaBlockAllocator implements BlockAllocator {
 
     public JpaBlockAllocator(EntityManagerFactory emf, JpaTransactionManager tm) {
         this.em = SharedEntityManagerCreator.createSharedEntityManager(emf);
+        this.tx = new TransactionTemplate(tm);
+        this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    // package-private: used by the test, which passes a fake EntityManager and transaction manager
+    JpaBlockAllocator(EntityManager em, PlatformTransactionManager tm) {
+        this.em = em;
         this.tx = new TransactionTemplate(tm);
         this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }

@@ -175,7 +175,7 @@ class RefGeneratorTest {
 
     @Test
     void yearOutsideWindowFailsLoudly() {
-        var clock = new MutableClock("2050-01-01T00:00:00Z");
+        var clock = new MutableClock("2059-01-01T00:00:00Z");
         try (var g = gen(new InMemoryBlockAllocator(), clock, 100, false, Set.of())) {
             assertThrows(IllegalStateException.class, g::next);
         }

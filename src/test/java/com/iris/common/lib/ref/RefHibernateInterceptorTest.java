@@ -1,6 +1,4 @@
 package com.iris.common.lib.ref;
-
-
 import org.hibernate.Interceptor;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RefHibernateInterceptorTest {
     static class Receipt { @Reference String ref; String other; }
+    static class Prefixed { @Reference(prefix = "RC-") String ref; }
     static class Plain { String x; }
 
     final AtomicInteger counter = new AtomicInteger();
@@ -79,10 +78,17 @@ class RefHibernateInterceptorTest {
 
     @Test
     void nullNonRefPropertiesAreNotTouched() {
-        Object[] state = { null, "MINE" };            // "other" is null, but it is not a @GeneratedRef property
+        Object[] state = { null, "MINE" };            // "other" is null, but it is not a @Reference property
         assertFalse(ours.onSave(new Receipt(), 1L, state, names, null));
         assertNull(state[0]);
         assertEquals("MINE", state[1]);
         assertEquals(0, counter.get());
+    }
+
+    @Test
+    void appliesThePropertysPrefix() {
+        Object[] state = { null };
+        assertTrue(ours.onSave(new Prefixed(), 1L, state, new String[] { "ref" }, null));
+        assertEquals("RC-R1", state[0]);
     }
 }

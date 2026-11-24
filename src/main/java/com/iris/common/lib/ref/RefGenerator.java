@@ -21,7 +21,7 @@ public final class RefGenerator implements AutoCloseable {
     public static final Set<String> DEFAULT_BLOCKLIST = Set.of("SEX", "ASS", "KKK", "HIV", "TIT");
     public static final long DEFAULT_BLOCK_SIZE = 1_000_000L;
 
-    private static final int YEAR_BASE = 2016;
+    private static final int YEAR_BASE = 2026;
 
     private record Block(LocalDate day, long start) {}
 

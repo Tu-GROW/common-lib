@@ -9,6 +9,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class RefInjectorTest {
     static class Base { @Reference String baseRef; }
     static class Receipt extends Base { @Reference String ref; String other; }
+    static class Invoice {
+        @Reference(prefix = "INV-", suffix = "-KE") String ref;
+        @Reference(prefix = "P-") String other;
+    }
     static class Bad { @Reference Long ref; }
     static class Finalised { @Reference final String ref = null; }
 
@@ -63,8 +67,45 @@ class RefInjectorTest {
     @Test
     void exposesFieldNamesAndNextRef() {
         assertEquals(java.util.Set.of("ref", "baseRef"),
-            new java.util.HashSet<>(java.util.Arrays.asList(RefInjector.fieldNames(Receipt.class))));
+                new java.util.HashSet<>(java.util.Arrays.asList(RefInjector.fieldNames(Receipt.class))));
         assertEquals(0, RefInjector.fieldNames(String.class).length);
         assertEquals("X", new RefInjector(() -> "X").nextRef());
+    }
+
+    @Test
+    void appliesPrefixAndSuffixPerField() {
+        AtomicInteger n = new AtomicInteger();
+        var inj = new RefInjector(() -> "R" + n.incrementAndGet());
+        Invoice inv = inj.inject(new Invoice());
+        assertTrue(inv.ref.startsWith("INV-") && inv.ref.endsWith("-KE"), inv.ref);
+        assertTrue(inv.other.startsWith("P-") && !inv.other.endsWith("-KE"), inv.other);
+        assertNotEquals(inv.ref.substring(4, inv.ref.length() - 3), inv.other.substring(2));
+    }
+
+    @Test
+    void presetValuesAreNotDecorated() {
+        var inj = new RefInjector(() -> "R1");
+        Invoice inv = new Invoice();
+        inv.ref = "MINE";
+        inj.inject(inv);
+        assertEquals("MINE", inv.ref);
+    }
+
+    @Test
+    void nextRefForFieldIsDecorated() {
+        var inj = new RefInjector(() -> "R1");
+        assertEquals("INV-R1-KE", inj.nextRef(Invoice.class, "ref"));
+        assertThrows(IllegalArgumentException.class, () -> inj.nextRef(Invoice.class, "nope"));
+    }
+
+    @Test
+    void unwrapStripsPrefixAndSuffix() {
+        assertEquals("ABQ4T7KM2X", RefInjector.unwrap(Invoice.class, "ref", "inv-ABQ4T7KM2X-ke"));
+        assertEquals("ABQ4T7KM2X", RefInjector.unwrap(Invoice.class, "other", " P-ABQ4T7KM2X "));
+        assertNull(RefInjector.unwrap(Invoice.class, "ref", "ABQ4T7KM2X"));          // no prefix/suffix
+        assertNull(RefInjector.unwrap(Invoice.class, "ref", "INV-"));                // too short
+        assertNull(RefInjector.unwrap(Invoice.class, "ref", "INV-ABQ4T7KM2X-XX"));   // wrong suffix
+        assertNull(RefInjector.unwrap(Invoice.class, "ref", null));
+        assertThrows(IllegalArgumentException.class, () -> RefInjector.unwrap(Invoice.class, "nope", "x"));
     }
 }

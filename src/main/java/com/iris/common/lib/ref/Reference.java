@@ -10,4 +10,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Reference {}
+public @interface Reference {
+    String prefix() default "";
+    String suffix() default "";
+}

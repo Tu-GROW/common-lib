@@ -1,4 +1,5 @@
 package com.iris.common.lib.ref;
+
 import org.hibernate.Interceptor;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class RefHibernateInterceptorTest {
     static class Receipt { @Reference String ref; String other; }
     static class Prefixed { @Reference(prefix = "RC-") String ref; }
+    static class Formatted { @Reference(prefix = "RC-", display = RefDisplay.FORMATTED) String ref; }
     static class Plain { String x; }
 
     final AtomicInteger counter = new AtomicInteger();
@@ -90,5 +92,14 @@ class RefHibernateInterceptorTest {
         Object[] state = { null };
         assertTrue(ours.onSave(new Prefixed(), 1L, state, new String[] { "ref" }, null));
         assertEquals("RC-R1", state[0]);
+    }
+
+    @Test
+    void storesTheCompactFormEvenWhenDisplayIsFormated() {
+        var inj = new RefInjector(() -> "ABQP30TZZC");
+        Interceptor compact = new RefHibernateInterceptor(() -> inj);
+        Object[] state = { null };
+        assertTrue(compact.onSave(new Formatted(), 1L, state, new String[] { "ref" }, null));
+        assertEquals("RC-ABQP30TZZC", state[0]);
     }
 }

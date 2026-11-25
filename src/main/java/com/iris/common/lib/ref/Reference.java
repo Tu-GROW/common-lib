@@ -13,4 +13,6 @@ import java.lang.annotation.*;
 public @interface Reference {
     String prefix() default "";
     String suffix() default "";
+    /** COMPACT (default) or FORMATTED (grouped) when shown through RefFormat. Never changes what is stored. */
+    RefDisplay display() default RefDisplay.COMPACT;
 }

@@ -1,5 +1,6 @@
 package com.iris.common.lib.ref;
 
+import com.iris.common.lib.ref.RefInjector;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,6 +13,10 @@ class RefInjectorTest {
     static class Invoice {
         @Reference(prefix = "INV-", suffix = "-KE") String ref;
         @Reference(prefix = "P-") String other;
+    }
+    static class Formatted {
+        @Reference(prefix = "RC-", display = RefDisplay.FORMATTED) String ref;
+        @Reference String plain;
     }
     static class Bad { @Reference Long ref; }
     static class Finalised { @Reference final String ref = null; }
@@ -107,5 +112,25 @@ class RefInjectorTest {
         assertNull(RefInjector.unwrap(Invoice.class, "ref", "INV-ABQ4T7KM2X-XX"));   // wrong suffix
         assertNull(RefInjector.unwrap(Invoice.class, "ref", null));
         assertThrows(IllegalArgumentException.class, () -> RefInjector.unwrap(Invoice.class, "nope", "x"));
+    }
+
+    @Test
+    void alwaysStoresTheCompactFormEvenWhenDisplayIsFormated() {
+        var inj = new RefInjector(() -> "ABQP30TZZC");
+        Formatted f = inj.inject(new Formatted());
+        assertEquals("RC-ABQP30TZZC", f.ref);
+        assertEquals("ABQP30TZZC", f.plain);
+        assertEquals("RC-ABQP30TZZC7", new RefInjector(() -> "ABQP30TZZC7").nextRef(Formatted.class, "ref"));
+    }
+
+    @Test
+    void unwrapReturnsTheCompactRef() {
+        assertEquals("ABQP30TZZC", RefInjector.unwrap(Formatted.class, "ref", "rc-ABQP30TZZC"));
+    }
+
+    @Test
+    void specExposesWhatTheFieldDeclares() {
+        assertEquals(new RefInjector.Spec("RC-", "", RefDisplay.FORMATTED), RefInjector.spec(Formatted.class, "ref"));
+        assertEquals(new RefInjector.Spec("", "", RefDisplay.COMPACT), RefInjector.spec(Formatted.class, "plain"));
     }
 }

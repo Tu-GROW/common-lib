@@ -9,8 +9,11 @@ import java.util.function.Supplier;
 
 /** Fills null {@link Reference} fields (including inherited ones). Thread-safe; field lookup is cached per class. */
 public final class RefInjector {
-    private record RefField(Field field, String prefix, String suffix) {
-        String decorate(String ref) { return prefix + ref + suffix; }
+    /** What a @Reference field declares. */
+    public record Spec(String prefix, String suffix, RefDisplay display) {}
+
+    private record RefField(Field field, Spec spec) {
+        String decorate(String ref) { return spec.prefix() + ref + spec.suffix(); }
     }
 
     private static final ClassValue<RefField[]> FIELDS = new ClassValue<>() {
@@ -36,7 +39,7 @@ public final class RefInjector {
         return entity;
     }
 
-    /** Names of the @GeneratedRef fields of a class (cached), e.g. to match JPA/Hibernate property names. */
+    /** Names of the @Reference fields of a class (cached), e.g. to match JPA/Hibernate property names. */
     public static String[] fieldNames(Class<?> type) {
         RefField[] fs = FIELDS.get(type);
         String[] names = new String[fs.length];
@@ -60,16 +63,22 @@ public final class RefInjector {
         RefField f = find(type, fieldName);
         if (value == null) return null;
         String v = value.trim();
-        int p = f.prefix().length(), s = f.suffix().length();
+        String prefix = f.spec().prefix(), suffix = f.spec().suffix();
+        int p = prefix.length(), s = suffix.length();
         if (v.length() < p + s
-                || !v.regionMatches(true, 0, f.prefix(), 0, p)
-                || !v.regionMatches(true, v.length() - s, f.suffix(), 0, s)) return null;
+                || !v.regionMatches(true, 0, prefix, 0, p)
+                || !v.regionMatches(true, v.length() - s, suffix, 0, s)) return null;
         return v.substring(p, v.length() - s);
+    }
+
+    /** The prefix, suffix and display flag declared on the field; used by {@link RefFormat}. */
+    public static Spec spec(Class<?> type, String fieldName) {
+        return find(type, fieldName).spec();
     }
 
     private static RefField find(Class<?> type, String fieldName) {
         for (RefField f : FIELDS.get(type)) if (f.field().getName().equals(fieldName)) return f;
-        throw new IllegalArgumentException("no @GeneratedRef field '" + fieldName + "' on " + type.getName());
+        throw new IllegalArgumentException("no @Reference field '" + fieldName + "' on " + type.getName());
     }
 
     private static RefField[] scan(Class<?> type) {
@@ -80,9 +89,9 @@ public final class RefInjector {
                 if (a == null) continue;
                 int m = f.getModifiers();
                 if (f.getType() != String.class || Modifier.isFinal(m) || Modifier.isStatic(m))
-                    throw new IllegalStateException("@GeneratedRef needs a non-final, non-static String field: " + f);
+                    throw new IllegalStateException("@Reference needs a non-final, non-static String field: " + f);
                 f.setAccessible(true);
-                out.add(new RefField(f, a.prefix(), a.suffix()));
+                out.add(new RefField(f, new Spec(a.prefix(), a.suffix(), a.display())));
             }
         }
         return out.toArray(new RefField[0]);

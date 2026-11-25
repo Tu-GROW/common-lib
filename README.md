@@ -219,7 +219,8 @@ ABQP30TZZC7    11 characters with the optional check character
 2. Set the master key (base64, at least 32 bytes, **the same on every instance**):
 
    ```yaml
-   refgen:
+   ref:
+    generator:
      master-key: ${REF_MASTER_KEY}
    ```
 
@@ -263,7 +264,7 @@ public class Receipt {
 - **Storage is always compact.** Size the column for prefix + suffix + 10 characters (11 with `check-char`).
 - An entity can have several `@Reference` fields, each with its own prefix and suffix. Each gets a different ref.
 - **Insert only.** Updates never touch the ref, so a partial update without it keeps the stored value.
-- **JPA:** a Hibernate interceptor does the injection, with no `@EntityListeners` and no extra libraries. It runs alongside any interceptor you already configure. Turn it off with `refgen.inject-jpa=false`.
+- **JPA:** a Hibernate interceptor does the injection, with no `@EntityListeners` and no extra libraries. It runs alongside any interceptor you already configure. Turn it off with `ref.generator.inject-jpa=false`.
 - **Spring Data JDBC:** a before-convert callback injects into new aggregates only. It is registered automatically when Spring Data JDBC is present.
 - **Manual:** call `refInjector.inject(entity)` to fill null fields yourself (for example with `JdbcTemplate`).
 - The field must be a non-final, non-static `String`. Records and other immutable entities cannot use it.
@@ -301,13 +302,13 @@ Other helpers on `RefGenerator`: `isValid(input, hasCheckChar)`, `normalize(inpu
 
 | Property | Default | Description |
 |---|---|---|
-| `refgen.master-key` | none (required) | Base64, at least 32 bytes. Must be identical on every instance |
-| `refgen.allocator` | `jdbc` | Where counter blocks are leased: `jdbc` or `jpa` (see below) |
-| `refgen.block-size` | `1000000` | Counter values reserved per database round trip |
-| `refgen.check-char` | `false` | Append an 11th check character that catches typos offline |
-| `refgen.blocklist` | `SEX, ASS, KKK, HIV, TIT` | Substrings to skip. Setting it replaces the default list |
-| `refgen.inject-jpa` | `true` | Auto-inject `@Reference` fields through Hibernate |
-| `refgen.enabled` | `true` | Set `false` to switch the whole feature off |
+| `ref.generator.master-key` | none (required) | Base64, at least 32 bytes. Must be identical on every instance |
+| `ref.generator.allocator` | `jdbc` | Where counter blocks are leased: `jdbc` or `jpa` (see below) |
+| `ref.generator.block-size` | `1000000` | Counter values reserved per database round trip |
+| `ref.generator.check-char` | `false` | Append an 11th check character that catches typos offline |
+| `ref.generator.blocklist` | `SEX, ASS, KKK, HIV, TIT` | Substrings to skip. Setting it replaces the default list |
+| `ref.generator.inject-jpa` | `true` | Auto-inject `@Reference` fields through Hibernate |
+| `ref.generator.enabled` | `true` | Set `false` to switch the whole feature off |
 
 Declare your own `RefGenerator`, `RefInjector` or `BlockAllocator` bean to override the defaults.
 

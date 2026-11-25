@@ -29,9 +29,9 @@ Add the dependency to your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>com.Tu-GROW.common</groupId>
-    <artifactId>lib</artifactId>
-    <version>1.0.7</version>
+   <groupId>com.Tu-GROW.common</groupId>
+   <artifactId>lib</artifactId>
+   <version>1.0.7</version>
 </dependency>
 ```
 
@@ -39,10 +39,10 @@ The library is hosted on GitHub Packages. Add the repository to your `pom.xml`:
 
 ```xml
 <repositories>
-    <repository>
-        <id>github</id>
-        <url>https://maven.pkg.github.com/Tu-GROW/common-lib</url>
-    </repository>
+   <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/Tu-GROW/common-lib</url>
+   </repository>
 </repositories>
 ```
 
@@ -50,11 +50,11 @@ And add your credentials to `~/.m2/settings.xml`:
 
 ```xml
 <servers>
-    <server>
-        <id>github</id>
-        <username>YOUR_GITHUB_USERNAME</username>
-        <password>YOUR_GITHUB_TOKEN</password>
-    </server>
+   <server>
+      <id>github</id>
+      <username>YOUR_GITHUB_USERNAME</username>
+      <password>YOUR_GITHUB_TOKEN</password>
+   </server>
 </servers>
 ```
 
@@ -70,28 +70,28 @@ Add the following to your `application.yaml`:
 
 ```yaml
 notification:
-  client:
-    # Required
-    base-url: https://notification-engine.internal
+   client:
+      # Required
+      base-url: https://notification-engine.internal
 
-    # Optional: SYNC (default) or ASYNC
-    mode: SYNC
+      # Optional: SYNC (default) or ASYNC
+      mode: SYNC
 
-    # Optional: defaults shown
-    uri: /notifications
-    connect-timeout: 2s
-    read-timeout: 5s
+      # Optional: defaults shown
+      uri: /notifications
+      connect-timeout: 2s
+      read-timeout: 5s
 
-    # Optional: sent on every request
-    default-headers:
-      x-api-key: your-api-key-here
-      x-source-system: my-service
+      # Optional: sent on every request
+      default-headers:
+         x-api-key: your-api-key-here
+         x-source-system: my-service
 
-    # Optional: retry on server errors
-    retry:
-      enabled: true       # default: true
-      max-attempts: 3     # default: 3
-      backoff: 300ms      # default: 300ms
+      # Optional: retry on server errors
+      retry:
+         enabled: true       # default: true
+         max-attempts: 3     # default: 3
+         backoff: 300ms      # default: 300ms
 ```
 
 `SYNC` uses a blocking HTTP client. `ASYNC` uses a non-blocking client and requires `spring-boot-starter-webflux` on the classpath. If `base-url` is not set the SDK does not activate.
@@ -104,31 +104,31 @@ Extend `Notification` and add one method per notification scenario. Each method 
 @Service
 public class NotificationService extends Notification {
 
-    public Mono<NotificationEventResponse> sendOtp(String recipientId, String phone, String otp, String correlationId) {
-        return send(NotificationEvent.builder()
-                .eventId(UuidGenerator.generateV7())
-                .channel(Channel.SMS)
-                .recipientId(recipientId)
-                .recipientRef(phone)
-                .templateId("otp-verification")
-                .templateData(Map.of("otp", otp))
-                .priority(Priority.HIGH)
-                .correlationId(correlationId)
-                .build());
-    }
+   public Mono<NotificationEventResponse> sendOtp(String recipientId, String phone, String otp, String correlationId) {
+      return send(NotificationEvent.builder()
+              .eventId(UuidGenerator.generateV7())
+              .channel(Channel.SMS)
+              .recipientId(recipientId)
+              .recipientRef(phone)
+              .templateId("otp-verification")
+              .templateData(Map.of("otp", otp))
+              .priority(Priority.HIGH)
+              .correlationId(correlationId)
+              .build());
+   }
 
-    public Mono<NotificationEventResponse> sendWelcomeEmail(String recipientId, String email, String name, String correlationId) {
-        return send(NotificationEvent.builder()
-                .eventId(UuidGenerator.generateV7())
-                .channel(Channel.EMAIL)
-                .recipientId(recipientId)
-                .recipientRef(email)
-                .templateId("welcome-email")
-                .templateData(Map.of("name", name))
-                .priority(Priority.NORMAL)
-                .correlationId(correlationId)
-                .build());
-    }
+   public Mono<NotificationEventResponse> sendWelcomeEmail(String recipientId, String email, String name, String correlationId) {
+      return send(NotificationEvent.builder()
+              .eventId(UuidGenerator.generateV7())
+              .channel(Channel.EMAIL)
+              .recipientId(recipientId)
+              .recipientRef(email)
+              .templateId("welcome-email")
+              .templateData(Map.of("name", name))
+              .priority(Priority.NORMAL)
+              .correlationId(correlationId)
+              .build());
+   }
 }
 ```
 
@@ -165,9 +165,9 @@ return send(event, Map.of("x-idempotency-key", UuidGenerator.generateV7().toStri
 ```java
 notificationService.sendOtp(recipientId, phone, otp, correlationId)
         .doOnError(NotificationClientException.class, e ->
-                log.error("Invalid notification [{}]: {}", e.getStatus(), e.getBody()))
+        log.error("Invalid notification [{}]: {}", e.getStatus(), e.getBody()))
         .doOnError(NotificationServerException.class, e ->
-                log.error("Notification engine unavailable: {}", e.getMessage()))
+        log.error("Notification engine unavailable: {}", e.getMessage()))
         .subscribe();
 ```
 
@@ -179,10 +179,10 @@ To inject headers on every request (for example a trace ID from MDC), implement 
 @Component
 public class CorrelationHeaderProvider implements NotificationHeaderProvider {
 
-    @Override
-    public Map<String, String> resolve(NotificationEvent event) {
-        return Map.of("x-correlation-id", MDC.get("requestId"));
-    }
+   @Override
+   public Map<String, String> resolve(NotificationEvent event) {
+      return Map.of("x-correlation-id", MDC.get("requestId"));
+   }
 }
 ```
 
@@ -238,12 +238,12 @@ Annotate any `String` field and the ref is injected on insert, **only when the f
 ```java
 @Entity
 public class Receipt {
-    @Id @GeneratedValue
-    private Long id;
+   @Id @GeneratedValue
+   private Long id;
 
-    @Reference(prefix = "RC-", display = RefDisplay.FORMATTED)
-    @Column(name = "receipt_ref", length = 20, updatable = false, unique = true)
-    private String receiptRef;          // stored: RC-ABQP30TZZC
+   @Reference(prefix = "RC-", display = RefDisplay.FORMATTED)
+   @Column(name = "receipt_ref", length = 20, updatable = false, unique = true)
+   private String receiptRef;          // stored: RC-ABQP30TZZC
 }
 ```
 
@@ -284,13 +284,15 @@ RefFormat.display(Receipt.class, "receiptRef", receipt.getReceiptRef());   // RC
 String key = RefFormat.toStored(Receipt.class, "receiptRef", userInput);
 ```
 
+A stored value that lacks the field's prefix or suffix (for example a row saved before the prefix was added) is still grouped when it is a bare 10/11-character ref; no affixes are added to it.
+
 `toStored` accepts lower case, spaces or dashes, `O` for `0`, `I`/`L` for `1`, and an omitted prefix or suffix. It also rejects an impossible date or a wrong check character. Always look up with its result rather than raw input:
 
 ```java
 String key = RefFormat.toStored(Receipt.class, "receiptRef", userInput);
 if (key == null) {
-    // not a valid ref: no database call needed
-}
+        // not a valid ref: no database call needed
+        }
 ```
 
 Other helpers on `RefGenerator`: `isValid(input, hasCheckChar)`, `normalize(input)` and `dateOf(ref)` (the UTC issue date, for example to pick a partition).

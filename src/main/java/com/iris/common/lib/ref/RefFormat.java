@@ -1,6 +1,5 @@
 package com.iris.common.lib.ref;
 
-
 import com.iris.common.lib.utils.ReadableFormat;
 
 /**
@@ -32,14 +31,25 @@ public final class RefFormat {
     /**
      * Display form of a stored value from a {@link Reference} field: prefix and suffix kept, the ref grouped.
      * Only fields declared with {@code display = FORMATTED} are grouped; for any other field the stored value is
-     * returned unchanged.
+     * returned unchanged. A value that does not carry the field's prefix/suffix (for example a row stored before
+     * the prefix was added) is still grouped when it is a bare 10/11-character ref, and no affixes are added to it.
      */
     public static String display(Class<?> type, String fieldName, String stored) {
         RefInjector.Spec spec = RefInjector.spec(type, fieldName);
-        if (spec.display() != RefDisplay.FORMATTED) return stored;
-        String bare = RefInjector.unwrap(type, fieldName, stored);
-        if (bare == null) return stored;
-        return spec.prefix() + display(bare) + spec.suffix();
+        if (spec.display() != RefDisplay.FORMATTED || stored == null) return stored;
+        String prefix = spec.prefix(), suffix = spec.suffix();
+        String v = stored.trim(), head = "", tail = "";
+        if (!prefix.isEmpty() && v.regionMatches(true, 0, prefix, 0, prefix.length())) {
+            head = prefix;                                   // each affix is optional: a value stored
+            v = v.substring(prefix.length());                // before it was added is still grouped
+        }
+        if (!suffix.isEmpty() && v.length() >= suffix.length()
+                && v.regionMatches(true, v.length() - suffix.length(), suffix, 0, suffix.length())) {
+            tail = suffix;
+            v = v.substring(0, v.length() - suffix.length());
+        }
+        String grouped = display(v);
+        return grouped.equals(v) ? stored : head + grouped + tail;   // not a bare 10/11-char ref: leave alone
     }
 
     /**

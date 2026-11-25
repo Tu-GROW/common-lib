@@ -1,7 +1,5 @@
 package com.iris.common.lib.ref;
 
-
-
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -47,9 +45,19 @@ class RefFormatTest {
     }
 
     @Test
-    void displayLeavesValuesWithoutTheAffixesAlone() {
-        assertEquals("ABQP30TZZC", RefFormat.display(Invoice.class, "ref", "ABQP30TZZC"));
+    void displayStillGroupsBareRefsThatLackTheDeclaredAffixes() {
+        assertEquals("ABQ-P30T-ZZC", RefFormat.display(Invoice.class, "ref", "ABQP30TZZC"));      // no INV-/-KE on the value
+        assertEquals("ABQ-P30T-ZZC-7", RefFormat.display(Invoice.class, "ref", "ABQP30TZZC7"));
+        assertEquals("INV-ABQ-P30T-ZZC", RefFormat.display(Invoice.class, "ref", "INV-ABQP30TZZC"));   // suffix missing
+        assertEquals("ABQ-P30T-ZZC-KE", RefFormat.display(Invoice.class, "ref", "ABQP30TZZC-KE"));     // prefix missing
+    }
+
+    @Test
+    void displayLeavesNullAndUnrecognisedValuesAlone() {
         assertNull(RefFormat.display(Invoice.class, "ref", null));
+        assertEquals("ABQP30", RefFormat.display(Invoice.class, "ref", "ABQP30"));
+        assertEquals("INV-ABQP30-KE", RefFormat.display(Invoice.class, "ref", "INV-ABQP30-KE"));   // affixes present, ref wrong length
+        assertEquals("ABQP30TZZC", RefFormat.display(Raw.class, "ref", "ABQP30TZZC"));   // display COMPACT: never grouped
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.iris.common.lib.ref;
 
-import com.iris.common.lib.ref.RefInjector;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;

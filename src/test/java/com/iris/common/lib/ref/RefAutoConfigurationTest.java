@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RefAutoConfigurationTest {
-    static final String KEY = "refgen.master-key=" + Base64.getEncoder().encodeToString(new byte[32]);
+    static final String KEY = "ref.generator.master-key=" + Base64.getEncoder().encodeToString(new byte[32]);
 
     final ApplicationContextRunner runner = new ApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(RefAutoConfiguration.class));
@@ -69,21 +69,21 @@ class RefAutoConfigurationTest {
     void missingMasterKeyFailsStartup() {
         runner.withUserConfiguration(AllocatorConfig.class).run(ctx -> {
             assertThat(ctx).hasFailed();
-            assertThat(ctx).getFailure().hasStackTraceContaining("refgen.master-key is required");
+            assertThat(ctx).getFailure().hasStackTraceContaining("ref.generator.master-key is required");
         });
     }
 
     @Test
     void canBeDisabled() {
-        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, "refgen.enabled=false")
+        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, "ref.generator.enabled=false")
             .run(ctx -> assertThat(ctx).doesNotHaveBean(RefGenerator.class));
     }
 
     @Test
     void bindsProperties() {
         runner.withUserConfiguration(AllocatorConfig.class)
-            .withPropertyValues(KEY, "refgen.block-size=500", "refgen.check-char=true",
-                                "refgen.blocklist=AAA,BBB", "refgen.allocator=jdbc", "refgen.inject-jpa=true")
+            .withPropertyValues(KEY, "ref.generator.block-size=500", "ref.generator.check-char=true",
+                                "ref.generator.blocklist=AAA,BBB", "ref.generator.allocator=jdbc", "ref.generator.inject-jpa=true")
             .run(ctx -> {
                 RefProperties p = ctx.getBean(RefProperties.class);
                 assertThat(p.getBlockSize()).isEqualTo(500);
@@ -103,7 +103,7 @@ class RefAutoConfigurationTest {
 
     @Test
     void usesTheJpaAllocatorWhenAsked() {
-        runner.withUserConfiguration(JpaConfig.class).withPropertyValues(KEY, "refgen.allocator=jpa").run(ctx -> {
+        runner.withUserConfiguration(JpaConfig.class).withPropertyValues(KEY, "ref.generator.allocator=jpa").run(ctx -> {
             assertThat(ctx.getBean(BlockAllocator.class)).isInstanceOf(JpaBlockAllocator.class);
             assertThat(ctx).hasSingleBean(RefGenerator.class);
         });
@@ -145,7 +145,7 @@ class RefAutoConfigurationTest {
 
     @Test
     void jpaInjectionCanBeSwitchedOff() {
-        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, "refgen.inject-jpa=false")
+        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, "ref.generator.inject-jpa=false")
             .run(ctx -> assertThat(ctx).doesNotHaveBean("refHibernatePropertiesCustomizer"));
     }
 }

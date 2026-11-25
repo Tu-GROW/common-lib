@@ -10,7 +10,7 @@ import java.util.Set;
 
 @Setter
 @Getter
-@ConfigurationProperties(prefix = "refgen")
+@ConfigurationProperties(prefix = "ref.generator")
 public class RefProperties {
     /** Base64, >= 32 bytes. Must be identical on every instance. */
     private String masterKey;

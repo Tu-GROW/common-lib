@@ -34,7 +34,7 @@ import java.util.Base64;
  */
 @AutoConfiguration(after = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @EnableConfigurationProperties(RefProperties.class)
-@ConditionalOnProperty(prefix = "refgen", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "ref.generator", name = "enabled", havingValue = "true")
 public class RefAutoConfiguration {
 
     /** Default allocator (refgen.allocator=jdbc): its own autocommit connection from the DataSource pool. */

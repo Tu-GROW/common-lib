@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RefAutoConfigurationTest {
     static final String KEY = "ref.generator.master-key=" + Base64.getEncoder().encodeToString(new byte[32]);
+    static final String ENABLED_KEY="ref.generator.enabled=true";
 
     final ApplicationContextRunner runner = new ApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(RefAutoConfiguration.class));
@@ -56,7 +57,7 @@ class RefAutoConfigurationTest {
 
     @Test
     void registersGeneratorInjectorAndHooks() {
-        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY).run(ctx -> {
+        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, ENABLED_KEY).run(ctx -> {
             assertThat(ctx).hasSingleBean(RefGenerator.class);
             assertThat(ctx).hasSingleBean(RefInjector.class);
             assertThat(ctx).hasSingleBean(RefBeforeConvertCallback.class);
@@ -67,7 +68,7 @@ class RefAutoConfigurationTest {
 
     @Test
     void missingMasterKeyFailsStartup() {
-        runner.withUserConfiguration(AllocatorConfig.class).run(ctx -> {
+        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(ENABLED_KEY).run(ctx -> {
             assertThat(ctx).hasFailed();
             assertThat(ctx).getFailure().hasStackTraceContaining("ref.generator.master-key is required");
         });
@@ -82,7 +83,7 @@ class RefAutoConfigurationTest {
     @Test
     void bindsProperties() {
         runner.withUserConfiguration(AllocatorConfig.class)
-            .withPropertyValues(KEY, "ref.generator.block-size=500", "ref.generator.check-char=true",
+            .withPropertyValues(KEY,ENABLED_KEY, "ref.generator.block-size=500", "ref.generator.check-char=true",
                                 "ref.generator.blocklist=AAA,BBB", "ref.generator.allocator=jdbc", "ref.generator.inject-jpa=true")
             .run(ctx -> {
                 RefProperties p = ctx.getBean(RefProperties.class);
@@ -97,13 +98,13 @@ class RefAutoConfigurationTest {
 
     @Test
     void defaultsToTheJdbcAllocator() {
-        runner.withUserConfiguration(DataSourceConfig.class).withPropertyValues(KEY)
+        runner.withUserConfiguration(DataSourceConfig.class).withPropertyValues(KEY,ENABLED_KEY)
             .run(ctx -> assertThat(ctx.getBean(BlockAllocator.class)).isInstanceOf(JdbcBlockAllocator.class));
     }
 
     @Test
     void usesTheJpaAllocatorWhenAsked() {
-        runner.withUserConfiguration(JpaConfig.class).withPropertyValues(KEY, "ref.generator.allocator=jpa").run(ctx -> {
+        runner.withUserConfiguration(JpaConfig.class).withPropertyValues(KEY, ENABLED_KEY, "ref.generator.allocator=jpa").run(ctx -> {
             assertThat(ctx.getBean(BlockAllocator.class)).isInstanceOf(JpaBlockAllocator.class);
             assertThat(ctx).hasSingleBean(RefGenerator.class);
         });
@@ -111,7 +112,7 @@ class RefAutoConfigurationTest {
 
     @Test
     void hibernateCustomizerInstallsTheInterceptor() {
-        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY).run(ctx -> {
+        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, ENABLED_KEY).run(ctx -> {
             var customizer = ctx.getBean(HibernatePropertiesCustomizer.class);
             Map<String, Object> props = new HashMap<>();
             customizer.customize(props);
@@ -121,7 +122,7 @@ class RefAutoConfigurationTest {
 
     @Test
     void hibernateCustomizerChainsAnExistingInterceptor() {
-        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY).run(ctx -> {
+        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, ENABLED_KEY).run(ctx -> {
             Map<String, Object> props = new HashMap<>();
             Interceptor mine = new Interceptor() { };
             props.put(AvailableSettings.INTERCEPTOR, mine);
@@ -134,7 +135,7 @@ class RefAutoConfigurationTest {
 
     @Test
     void hibernateCustomizerRejectsANonInstanceInterceptor() {
-        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY).run(ctx -> {
+        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, ENABLED_KEY).run(ctx -> {
             Map<String, Object> props = new HashMap<>();
             props.put(AvailableSettings.INTERCEPTOR, "com.example.MyInterceptor");
             var customizer = ctx.getBean(HibernatePropertiesCustomizer.class);
@@ -145,7 +146,7 @@ class RefAutoConfigurationTest {
 
     @Test
     void jpaInjectionCanBeSwitchedOff() {
-        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, "ref.generator.inject-jpa=false")
+        runner.withUserConfiguration(AllocatorConfig.class).withPropertyValues(KEY, ENABLED_KEY, "ref.generator.inject-jpa=false")
             .run(ctx -> assertThat(ctx).doesNotHaveBean("refHibernatePropertiesCustomizer"));
     }
 }

@@ -27,7 +27,7 @@ import java.util.Base64;
 
 /**
  * Registers a singleton RefGenerator so any service can just @Autowired it.
- * Disable with refgen.enabled=false; override by declaring your own bean.
+ * Disable with ref.generator.enabled=false; override by declaring your own bean.
  *
  * Class names are referenced as class literals (not strings) so that a Spring Boot upgrade that moves a
  * class breaks compilation instead of silently switching a feature off.
@@ -37,11 +37,11 @@ import java.util.Base64;
 @ConditionalOnProperty(prefix = "ref.generator", name = "enabled", havingValue = "true")
 public class RefAutoConfiguration {
 
-    /** Default allocator (refgen.allocator=jdbc): its own autocommit connection from the DataSource pool. */
+    /** Default allocator (ref.generator.allocator=jdbc): its own autocommit connection from the DataSource pool. */
     @Bean
     @ConditionalOnBean(DataSource.class)
     @ConditionalOnMissingBean(BlockAllocator.class)
-    @ConditionalOnProperty(prefix = "refgen", name = "allocator", havingValue = "jdbc", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = "ref.generator", name = "allocator", havingValue = "jdbc", matchIfMissing = true)
     BlockAllocator refBlockAllocator(DataSource dataSource) {
         return new JdbcBlockAllocator(dataSource);
     }
@@ -52,7 +52,7 @@ public class RefAutoConfiguration {
     @ConditionalOnMissingBean
     RefGenerator refGenerator(BlockAllocator allocator, RefProperties p) {
         if (p.getMasterKey() == null || p.getMasterKey().isBlank())
-            throw new IllegalStateException("refgen.master-key is required (base64, >= 32 bytes, same on every instance)");
+            throw new IllegalStateException("ref.generator.master-key is required (base64, >= 32 bytes, same on every instance)");
         byte[] key = Base64.getDecoder().decode(p.getMasterKey().trim());   // RefCipher enforces >= 32 bytes
         return new RefGenerator(allocator, key, Clock.system(RefGenerator.ZONE),
                 p.getBlockSize(), p.isCheckChar(), p.getBlocklist());
@@ -64,10 +64,10 @@ public class RefAutoConfiguration {
         return new RefInjector(generator);
     }
 
-    /** Spring Data JPA allocator (refgen.allocator=jpa): own REQUIRES_NEW transaction on the app's EMF. */
+    /** Spring Data JPA allocator (ref.generator.allocator=jpa): own REQUIRES_NEW transaction on the app's EMF. */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(JpaTransactionManager.class)
-    @ConditionalOnProperty(prefix = "refgen", name = "allocator", havingValue = "jpa")
+    @ConditionalOnProperty(prefix = "ref.generator", name = "allocator", havingValue = "jpa")
     static class JpaAllocatorConfig {
         @Bean
         @ConditionalOnMissingBean(BlockAllocator.class)
@@ -79,11 +79,11 @@ public class RefAutoConfiguration {
     /**
      * JPA/Hibernate: injects @GeneratedRef on insert with no per-entity setup. Registered through Spring Boot's
      * HibernatePropertiesCustomizer, so it needs nothing beyond the Hibernate the app already has.
-     * Turn off with refgen.inject-jpa=false.
+     * Turn off with ref.generator.inject-jpa=false.
      */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass({Interceptor.class, HibernatePropertiesCustomizer.class})
-    @ConditionalOnProperty(prefix = "refgen", name = "inject-jpa", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = "ref.generator", name = "inject-jpa", havingValue = "true", matchIfMissing = true)
     static class HibernateHook {
         @Bean
         HibernatePropertiesCustomizer refHibernatePropertiesCustomizer(ObjectProvider<RefInjector> injector) {
@@ -96,7 +96,7 @@ public class RefAutoConfiguration {
                     props.put(AvailableSettings.INTERCEPTOR, RefHibernateInterceptor.chain(user, ours));
                 } else {
                     throw new IllegalStateException("hibernate.session_factory.interceptor is set to " + existing
-                            + " (not an Interceptor instance), so it cannot be combined. Set refgen.inject-jpa=false"
+                            + " (not an Interceptor instance), so it cannot be combined. Set ref.generator.inject-jpa=false"
                             + " and call RefInjector.inject(entity) yourself.");
                 }
             };
